@@ -5,7 +5,7 @@ const secretkey = 'yabbykey'
 // 生成 token
 const sign = function(data={}){
  return jsonwebtoken.sign(data, secretkey,{
-  expiresIn: 60*60
+  expiresIn: 60*60*24
  })
 }
 
@@ -15,9 +15,9 @@ const verify = (req, res, next)=>{
 	if (authorization.includes('Bearer')) {
 		token = authorization.replace('Bearer ', '');
 	} else {
-		token = authorization;
-	}
-  console.error(token)
+    console.error('新用户')
+    next()
+  }
   jsonwebtoken.verify(token, secretkey, (error, data) => {
 		if (error) {
       console.error('error', error)
