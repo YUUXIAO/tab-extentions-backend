@@ -14,8 +14,7 @@ app.use(cors())
 app.use(function (req, res, next) {
   const domain = req.headers.referer
   console.error('q请求接口中间件', domain)
-  whiteList.includes(domain) ? res.header('Access-Control-Allow-Origin', '*') : res.header('Access-Control-Allow-Origin', 'http://127.0.0.1')
-
+  res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
 
   next()
@@ -23,7 +22,20 @@ app.use(function (req, res, next) {
 app.use(express.json())
 app.use('/', router)
 
-const { addHistory, createUser, createUrlTag } = require('./index.js')
+const { addHistory, createUser, getUrlTag, addFavorUrl, createUrlTag } = require('./index.js')
+
+// 获取用户信息
+app.get('/userinfo', jwt.verify, async (req, res) => {
+  console.error('获取用户信息', req._id)
+  mongo.findOneById('user', req._id, data => {
+    console.error('查询结果', data)
+    const { token, password, loginTime, ...otherData } = data
+    res.json({
+      error: 0,
+      data: otherData,
+    })
+  })
+})
 
 // 获取验证码
 app.get('/sendMail', async (req, res) => {
@@ -80,51 +92,30 @@ app.post('/login', async (req, res) => {
       userId,
     })
   })
-  // console.error('登录用户', user)
-
-  // const token = jwt.sign(req.body)
-
-  // console.error('token', token)
-
-  // const userId = createUser(data)
-
-  // });
-
-  // if (data) {
-  //   if (data.password == md5(req.body.password)) {
-  //     res.json({
-  //       error:0,
-  //       data: '登录成功',
-  //       token: jwt.sign({ _id: data._id }),// 生成token，并传入用户_id
-  //     });
-  //   }else{
-  //     res.json({error:1, data: '密码错误'});
-  //   }
-  // } else {
-  //   res.json({error:1, data: '用户名不存在，请先注册'});
-  // }
 })
 
 // 创建标签组
-// jwt.verify,
-app.post('/createTag', (req, res) => {
+app.post('/createTag', jwt.verify, (req, res) => {
   console.log('标签组222', req._id)
 
-  // console.log(res) // 包含解析 JSON 的 JavaScript 对象
-  createUrlTag(req.body, req._id)
-  res.json(req.body)
+  createUrlTag(req.body, req._id, res)
+})
+
+// 查询标签
+app.get('/createTag', jwt.verify, (req, res) => {
+  getUrlTag(req._id, groups => {
+    res.json({
+      error: 0,
+      data: groups,
+      msg: '查询成功',
+    })
+  })
 })
 
 // 收藏/取消收藏url
-app.post('/favor', (req, res) => {
-  console.log('收藏/取消收藏url', req)
-  const { body, isFavor } = req.query
-  if (isFavor) {
-    res.send('收藏url成功')
-  } else {
-    res.send('取消收藏url成功')
-  }
-  // addHistory(keyword)
+app.get('/favor', jwt.verify, (req, res) => {
+  const { url } = req.query
+  addFavorUrl(req._id, url, res)
 })
 
 app.listen(3000, () => {

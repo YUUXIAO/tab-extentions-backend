@@ -1,37 +1,38 @@
-const jsonwebtoken = require("jsonwebtoken")
+const jsonwebtoken = require('jsonwebtoken')
 const secretkey = 'yabbykey'
-
+const mongodb = require('./mongo')
 
 // 生成 token
-const sign = function(data={}){
- return jsonwebtoken.sign(data, secretkey,{
-  expiresIn: 60*60*24
- })
+const sign = function (data = {}) {
+  return jsonwebtoken.sign(data, secretkey, {
+    expiresIn: 60 * 60 * 24 * 107,
+  })
 }
 
-const verify = (req, res, next)=>{
-  let authorization = req.headers.authorization ||  '';
-	let token = '';
-	if (authorization.includes('Bearer')) {
-		token = authorization.replace('Bearer ', '');
-	} else {
+const verify = (req, res, next) => {
+  let authorization = req.headers.authorization || ''
+  let token = ''
+  if (authorization.includes('Bearer')) {
+    token = authorization.replace('Bearer ', '')
+  } else {
     console.error('新用户')
     next()
   }
-  jsonwebtoken.verify(token, secretkey, (error, data) => {
-		if (error) {
-      console.error('error', error)
-			res.json({ error: 1, data: 'token验证失败' });
-		} else {
+  jsonwebtoken.verify(token, secretkey, async (error, data) => {
+    if (error) {
+      res.status(403).send({ error: 1, data: 'token验证失败' })
+    } else {
       console.error('verify拿到数据', data)
-			req._id = data._id;
-			next();
-		}
-	});
-
+      mongodb.findOne('user', { mail: data.mail }, result => {
+        req._id = result._id
+        console.error('verfity 根据用户名查到id', req._id)
+        next()
+      })
+    }
+  })
 }
 
 module.exports = {
-	sign,
-	verify,
-};
+  sign,
+  verify,
+}
