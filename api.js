@@ -8,6 +8,8 @@ const sendMailObj = require('./mail.js')
 const app = express()
 const whiteList = ['http://127.0.0.1:4000/', 'http://127.0.0.1:5173/']
 
+console.log('122', process.env)
+
 // import addHistory from './index.js'
 // 默认情况下，Express 不解析 HTTP 请求体，但它有一个内置中间件，用解析的请求体填充 req.body 属性。例如，app.use(express.json()) 是告诉 express 为您自动解析 json 请求体的方式
 app.use(cors())

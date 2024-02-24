@@ -5,6 +5,8 @@ WORKDIR /tab-extension
 COPY *.js .
 COPY package.json .
 
+ENV DB_PATH=db
+
 RUN npm config set registry https://registry.npmmirror.com && \
   npm i
 

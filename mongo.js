@@ -1,8 +1,9 @@
 var mongodb = require('mongodb')
 var MongoClient = mongodb.MongoClient
 var ObjectID = require('mongodb').ObjectID
+const db_path = process.env.DB_HOST || '127.0.0.1'
 
-var connStr = 'mongodb://127.0.0.1:27017'
+var connStr = `mongodb://${db_path}:27017`
 
 exports.objId = ObjectID //导出查询mongo自生成的id
 
