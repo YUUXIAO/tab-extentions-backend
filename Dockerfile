@@ -8,4 +8,4 @@ COPY package.json .
 RUN npm config set registry https://registry.npmmirror.com && \
   npm i
 
-ENTRYPOINT [ "node api.js" ]
+ENTRYPOINT [ "node", "api.js" ]
