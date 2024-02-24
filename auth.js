@@ -20,10 +20,14 @@ const verify = (req, res, next) => {
   }
   jsonwebtoken.verify(token, secretkey, async (error, data) => {
     if (error) {
-      res.status(403).send({ error: 1, data: 'token验证失败' })
+      res.status(403).send({ error: 1, data: '请先登录' })
     } else {
       console.error('verify拿到数据', data)
       mongodb.findOne('user', { mail: data.mail }, result => {
+        if (!result) {
+          res.status(401).send({ error: 1, data: '请先登录' })
+          return
+        }
         req._id = result._id
         console.error('verfity 根据用户名查到id', req._id)
         next()
