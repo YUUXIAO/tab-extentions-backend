@@ -62,6 +62,12 @@ app.post('/later', jwt.verify, (req, res) => {
 app.get('/later', jwt.verify, (req, res) => {
   service.getLater(req, res)
 })
+app.put('/later', jwt.verify, (req, res) => {
+  service.updateLater(req, res)
+})
+app.delete('/later', jwt.verify, (req, res) => {
+  service.deleteLater(req, res)
+})
 
 app.listen(3000, () => {
   console.log('Server started on port 3000')

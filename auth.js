@@ -1,6 +1,5 @@
 const jsonwebtoken = require('jsonwebtoken')
 const secretkey = 'yabbykey'
-const mongodb = require('./mongo')
 const dbOperations = require('./db.js')
 
 // 生成 token

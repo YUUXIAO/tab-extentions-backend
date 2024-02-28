@@ -54,10 +54,18 @@ const insertLater = data => {
   return mongo.insertOne('see_later', data)
 }
 
-// 插入一条稍后再看
+// 插入多条稍后再看
 const insertLaterMany = data => {
-  return mongo.insertOne('see_later', data)
+  return mongo.insertMany('see_later', data)
 }
+// 更新稍后状态
+const updateLater = (id, updateObj) => {
+  return mongo.updateOneById('see_later', id, updateObj)
+}
+const deleteLater = id => {
+  return mongo.deleteOneById('see_later', id)
+}
+
 module.exports = {
   sendRegisterEmail,
   verifyRegisterCode,
@@ -69,5 +77,7 @@ module.exports = {
   insertLater,
   findUserInfo,
   insertUser,
+  deleteLater,
   insertLaterMany,
+  updateLater,
 }

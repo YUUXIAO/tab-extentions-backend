@@ -177,6 +177,34 @@ const getLater = async (req, res) => {
     data: laterResults,
   })
 }
+// 更新稍后再看
+const updateLater = async (req, res) => {
+  const laterResults = (await dbOperations.findUserLater(req._id)) || []
+  const { _id } = req.body
+  laterResults.forEach(async i => {
+    if (i._id.toString() === _id) {
+      const status = Number(!i?.status)
+      await dbOperations.updateLater(i._id, { $set: { status } })
+      const updateData = await dbOperations.findUserLater(req._id)
+      res.json({
+        error: 0,
+        msg: '更新成功',
+        data: updateData,
+      })
+    }
+  })
+}
+const deleteLater = async (req, res) => {
+  console.error('删除数据', req)
+  const { _id } = req.query
+  await dbOperations.deleteLater(_id)
+  const updateData = await dbOperations.findUserLater(req._id)
+  res.json({
+    error: 0,
+    msg: '删除成功',
+    data: updateData,
+  })
+}
 
 module.exports = {
   getUserInfo,
@@ -187,4 +215,6 @@ module.exports = {
   setLater,
   getLater,
   addFavorUrl,
+  updateLater,
+  deleteLater,
 }
