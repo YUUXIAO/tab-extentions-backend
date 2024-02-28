@@ -60,7 +60,6 @@ const sendMail = {
       }
     }
     return result
-    // db.verifyRegisterCode(mail, code)
   },
 }
 module.exports = sendMail
