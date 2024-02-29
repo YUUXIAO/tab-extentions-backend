@@ -14,7 +14,6 @@ const whiteList = ['http://127.0.0.1:4000/', 'http://127.0.0.1:5173/']
 app.use(cors())
 app.use(function (req, res, next) {
   const domain = req.headers.referer
-  console.error('q请求接口中间件', domain)
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
 
@@ -69,6 +68,20 @@ app.delete('/later', jwt.verify, (req, res) => {
   service.deleteLater(req, res)
 })
 
+// 关键词记事本
+
+app.post('/todoKeys', jwt.verify, (req, res) => {
+  service.setTodoKeys(req, res)
+})
+app.get('/todoKeys', jwt.verify, (req, res) => {
+  service.getTodoKeys(req, res)
+})
+app.put('/todoKeys', jwt.verify, (req, res) => {
+  service.updateTodoKeys(req, res)
+})
+app.delete('/todoKeys', jwt.verify, (req, res) => {
+  service.deleteTodoKeys(req, res)
+})
 app.listen(3000, () => {
   console.log('Server started on port 3000')
 })

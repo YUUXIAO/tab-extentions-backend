@@ -47,7 +47,8 @@ const verifyRegisterCode = (mail, code) => {
 
 // 查询用户稍后再看
 const findUserLater = userId => {
-  return mongo.findAll('see_later', { userId })
+  console.error('userId', userId)
+  return mongo.findAll('see_later', { userId: userId })
 }
 // 插入一条稍后再看
 const insertLater = data => {
@@ -66,7 +67,28 @@ const deleteLater = id => {
   return mongo.deleteOneById('see_later', id)
 }
 
+// 关键词记事本
+const insertTodoKeys = data => {
+  return mongo.insertOne('todo_keys', data)
+}
+const findUserTodoKeys = userId => {
+  return mongo.findAll('todo_keys', { userId: userId })
+}
+const insertTodoMany = data => {
+  return mongo.insertMany('todo_keys', data)
+}
+const updateTodoKeys = (id, updateObj) => {
+  return mongo.updateOneById('todo_keys', id, updateObj)
+}
+const deleteTodoKeys = id => {
+  return mongo.deleteOneById('todo_keys', id)
+}
+
 module.exports = {
+  insertTodoKeys,
+  updateTodoKeys,
+  findUserTodoKeys,
+  deleteTodoKeys,
   sendRegisterEmail,
   verifyRegisterCode,
   findUserLater,
@@ -77,6 +99,7 @@ module.exports = {
   insertLater,
   findUserInfo,
   insertUser,
+  insertTodoMany,
   deleteLater,
   insertLaterMany,
   updateLater,

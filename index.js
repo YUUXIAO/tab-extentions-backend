@@ -2,8 +2,7 @@
 
 // let url="mongodb://127.0.0.1:27017";  //数据库连接字符串
 const jwt = require('./auth.js')
-const mongodb = require('./mongo.js')
-const { param } = require('./router.js')
+// const mongodb = require('./mongo.js')
 const sendMailObj = require('./mail.js')
 const dbOperations = require('./db.js')
 
@@ -12,9 +11,15 @@ const getUserInfo = async (req, res) => {
   const data = await dbOperations.findUserInfo(req._id)
   console.error('获取用户信息', data)
   const { token, loginTime, ...otherData } = data
+  const laterData = await dbOperations.findUserLater(req._id)
+  const todoData = await dbOperations.findUserTodoKeys(req._id)
   res.json({
     error: 0,
-    data: otherData,
+    data: {
+      userinfo: otherData,
+      laterCount: laterData?.length || 0,
+      todoCount: todoData?.length || 0,
+    },
   })
 }
 
@@ -29,6 +34,41 @@ const sendMailCode = async (req, res) => {
     },
   })
 }
+
+// 同步用户本地收藏、稍后再看、记事本
+const updateLocal = async (req, userId) => {
+  const { laterData, todoData, collectUrls } = req.body
+  // 稍后再看
+  if (laterData?.length) {
+    const options = []
+    laterData.forEach(ele => {
+      const createObj = {
+        userId,
+        ...ele,
+      }
+      options.push(createObj)
+    })
+    dbOperations.insertLaterMany(options)
+  }
+
+  if (collectUrls?.length) {
+    const userInfo = await dbOperations.findUserInfo(userId)
+    const combine = Array.from(new Set([...(userInfo?.collectUrls || []), ...collectUrls]))
+    dbOperations.updateUser(userId, { $set: { collectUrls: combine } })
+  }
+  if (todoData?.length) {
+    const options = []
+    todoData.forEach(ele => {
+      const createObj = {
+        userId,
+        ...ele,
+      }
+      options.push(createObj)
+    })
+    dbOperations.insertTodoMany(options)
+  }
+}
+
 // 登录
 const createUser = async (req, res) => {
   const { mail, code, laterData } = req.body
@@ -38,14 +78,22 @@ const createUser = async (req, res) => {
     loginTime: Date.now(),
     token: '',
   }
-  const token = jwt.sign(req.body) // 生成token
+  // const token = {
+  //   mail,
+  //   code,
+  // }
+  let token = jwt.sign(req.body) // 生成token
+  console.error('登录body', req.body)
   const result = await dbOperations.findUserByMail(mail)
   console.error('查询用户', result)
   if (result?._id) {
-    console.log('已存在用户')
+    console.log('已存在用户', result)
     userId = result._id
+    updateLocal(req, userId)
+    await dbOperations.updateUser(userId, { $set: { token } })
   } else {
     console.log('创建新用户')
+
     const verifyRes = await sendMailObj.verifyCode(mail, code)
     if (verifyRes.error === 1) {
       res.json({
@@ -57,22 +105,9 @@ const createUser = async (req, res) => {
 
     userInfo.token = token
     const result = await dbOperations.insertUser(userInfo)
-
-    console.error('创建新用户成功', result)
     userId = result.insertedId.toHexString()
-
-    // 稍后再看
-    if (laterData?.length) {
-      const options = []
-      laterData.forEach(ele => {
-        const createObj = {
-          userId,
-          ...ele,
-        }
-        options.push(createObj)
-      })
-      dbOperations.insertLaterMany(options)
-    }
+    updateLocal(req, result.insertedId)
+    console.error('创建新用户成功', result)
   }
   res.json({
     error: 0,
@@ -84,14 +119,14 @@ const createUser = async (req, res) => {
 
 // 创建标签组
 const createUrlTag = async (req, res) => {
-  const { _id } = req
+  const { _id, body } = req
   let doc = {
     userId: _id,
     createTime: Date.now(),
-    ...payload,
+    ...body,
   }
   const groups = await dbOperations.findUserTags(_id)
-  const hasAleady = groups.find(i => i.name === payload.name)
+  const hasAleady = groups.find(i => i.name === body.name)
   if (hasAleady) {
     res.json({
       error: 1,
@@ -171,6 +206,7 @@ const setLater = async (req, res) => {
 
 const getLater = async (req, res) => {
   const laterResults = (await dbOperations.findUserLater(req._id)) || []
+  console.error('查询成功', laterResults)
   res.json({
     error: 0,
     msg: '查询成功',
@@ -195,7 +231,6 @@ const updateLater = async (req, res) => {
   })
 }
 const deleteLater = async (req, res) => {
-  console.error('删除数据', req)
   const { _id } = req.query
   await dbOperations.deleteLater(_id)
   const updateData = await dbOperations.findUserLater(req._id)
@@ -203,6 +238,60 @@ const deleteLater = async (req, res) => {
     error: 0,
     msg: '删除成功',
     data: updateData,
+  })
+}
+
+// 关键词记事本
+const setTodoKeys = async (req, res) => {
+  const { _id, body } = req
+  const todoKeysResults = (await dbOperations.findUserTodoKeys(_id)) || []
+  const createObj = {
+    userId: _id,
+    createTime: Date.now(),
+    status: 0,
+    ...body,
+  }
+  await dbOperations.insertTodoKeys(createObj)
+  res.json({
+    error: 0,
+    msg: '添加成功',
+    data: [...todoKeysResults, createObj],
+  })
+}
+
+const getTodoKeys = async (req, res) => {
+  const todoKeysResults = (await dbOperations.findUserTodoKeys(req._id)) || []
+  res.json({
+    error: 0,
+    msg: '查询成功',
+    data: todoKeysResults,
+  })
+}
+const deleteTodoKeys = async (req, res) => {
+  const { _id } = req.query
+  await dbOperations.deleteTodoKeys(_id)
+  const updateData = await dbOperations.findUserTodoKeys(req._id)
+  res.json({
+    error: 0,
+    msg: '删除成功',
+    data: updateData,
+  })
+}
+
+const updateTodoKeys = async (req, res) => {
+  const todoKeysResults = (await dbOperations.findUserTodoKeys(req._id)) || []
+  const { _id } = req.body
+  todoKeysResults.forEach(async i => {
+    if (i._id.toString() === _id) {
+      const status = Number(!i?.status)
+      await dbOperations.updateTodoKeys(i._id, { $set: { status } })
+      const updateData = await dbOperations.findUserTodoKeys(req._id)
+      res.json({
+        error: 0,
+        msg: '更新成功',
+        data: updateData,
+      })
+    }
   })
 }
 
@@ -217,4 +306,8 @@ module.exports = {
   addFavorUrl,
   updateLater,
   deleteLater,
+  setTodoKeys,
+  getTodoKeys,
+  deleteTodoKeys,
+  updateTodoKeys,
 }

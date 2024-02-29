@@ -25,10 +25,8 @@ async function _connect() {
 
 // 插入一条数据
 async function insertOne(collection, obj) {
-  console.log('插入一条数据', collection)
   const db = await _connect()
   return db.collection(collection).insertOne(obj)
-  // callback(result)
 }
 
 // 插入多条数据
@@ -61,27 +59,21 @@ async function updateOne(collection, whereObj, updateObj) {
 }
 
 // 修改一条记录
-function updateMany(collection, whereObj, updateObj, callback) {
-  const db = _connect()
-  db.collection(collection).updateMany(whereObj, updateObj, function (err, result) {
-    callback(err, result)
-    db.close() //关闭数据库
-  })
+async function updateMany(collection, whereObj, updateObj) {
+  const db = await _connect()
+  return db.collection(collection).updateMany(whereObj, updateObj)
 }
 
-// 删除一条记录
+// 删除一条记录ß
 async function deleteOne(collection, whereObj) {
   const db = await _connect()
   return db.collection(collection).deleteOne(whereObj)
 }
 
 // 删除多条记录
-function deleteMany(collection, whereObj, callback) {
-  const db = _connect()
-  db.collection(collection).deleteMany(whereObj, function (err, result) {
-    callback(err, result)
-    db.close() //关闭数据库
-  })
+async function deleteMany(collection, whereObj) {
+  const db = await _connect()
+  return db.collection(collection).deleteMany(whereObj)
 }
 
 // 根据ID来删除一条记录
@@ -96,7 +88,6 @@ async function findAll(collection, obj) {
 
 module.exports = {
   _connect,
-  // ObjectID,
   findOneById,
   findOne,
   insertMany,
