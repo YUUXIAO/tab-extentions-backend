@@ -1,4 +1,4 @@
-import Config from './config.js'
+const Config = require('./config.js')
 
 const codeMaps = Object.freeze({
   OK: { code: 200, error: 0, msg: '成功' },
