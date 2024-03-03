@@ -18,10 +18,6 @@ app.use(express.json())
 app.use('/', router) // // 注册路由模块
 app.use('/static', express.static(path.join(__dirname, 'public'))) // 注册静态资源
 
-// app.get('/privacy', function (req, res) {
-//   res.sendFile(__dirname + '/public/' + 'privacy.html')
-// }) // 显示html页面
-
 app.listen(3000, () => {
   console.log('Server started on port 3000')
 })
