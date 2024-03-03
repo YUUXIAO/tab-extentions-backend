@@ -1,3 +1,5 @@
+import Config from './config.js'
+
 const codeMaps = Object.freeze({
   OK: { code: 200, error: 0, msg: '成功' },
   ERR_AUTH: { code: 401, error: 1, msg: '权限校验失败' },
@@ -26,7 +28,7 @@ const emailTemplate = code => {
 <br>
 <div>Thanks again for signing up!
 </div>
-<div>P.S. lf the code has expired or you closedthe activation page <a href="javascripts;">click here</a>.
+<div>P.S. lf the code has expired or you closedthe activation page <a href="mailto:${Config.mailAddress}">click here</a>.
 </div>`
 }
 

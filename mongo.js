@@ -16,7 +16,6 @@ async function _connect() {
   try {
     const client = await MongoClient.connect(connStr)
     const db = client.db('tab_extentions')
-    console.log('Connected successfully to server')
     return db
   } catch (err) {
     console.error('mongo链接失败', err)

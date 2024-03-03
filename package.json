@@ -2,7 +2,7 @@
   "name": "ab-extentions-backend",
   "version": "1.0.0",
   "module": "module",
-  "description": "",
+  "description": "Tab Manager Extetions的后台项目",
   "main": "index.js",
   "scripts": {
     "dev": "node api.js",
