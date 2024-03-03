@@ -19,7 +19,7 @@ const sendMail = {
     const captchaCode = Math.random().toString().substring(2, 6)
 
     // 定义transport对象并发送邮件
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"Tab Extentions" <${MailAddress}>`, // 发送方邮箱的账号
       to: mail, // 邮箱接受者的账号
       subject: 'Tab Extentions', // Subject line

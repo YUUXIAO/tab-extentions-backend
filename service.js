@@ -1,38 +1,34 @@
-// const { MongoClient } = require("mongodb");  //导入依赖对象mongo客户端
-
-// let url="mongodb://127.0.0.1:27017";  //数据库连接字符串
 const jwt = require('./auth.js')
-// const mongodb = require('./mongo.js')
 const sendMailObj = require('./mail.js')
 const dbOperations = require('./db.js')
 
 // 获取用户信息
 const getUserInfo = async (req, res) => {
   const data = await dbOperations.findUserInfo(req._id)
-  console.error('获取用户信息', data)
   const { token, loginTime, ...otherData } = data
   const laterData = await dbOperations.findUserLater(req._id)
   const todoData = await dbOperations.findUserTodoKeys(req._id)
-  res.json({
-    error: 0,
-    data: {
-      userinfo: otherData,
-      laterCount: laterData?.length || 0,
-      todoCount: todoData?.length || 0,
-    },
-  })
+  let laterCount = 0
+  let todoCount = 0
+  if (laterData?.length) {
+    laterCount = laterData.filter(i => i.status === 0)?.length || 0
+  }
+  if (todoData?.length) {
+    todoCount = todoData.filter(i => i.status === 0)?.length || 0
+  }
+  return {
+    userinfo: otherData,
+    laterCount,
+    todoCount,
+  }
 }
 
 //获取验证码
 const sendMailCode = async (req, res) => {
-  const captchaCode = sendMailObj.sendEmail(req.query.email)
-  console.error('获取验证码', req.query)
-  res.json({
-    error: 0,
-    data: {
-      verifyCode: captchaCode,
-    },
-  })
+  const captchaCode = await sendMailObj.sendEmail(req.query.email)
+  return {
+    verifyCode: captchaCode,
+  }
 }
 
 // 同步用户本地收藏、稍后再看、记事本
@@ -78,43 +74,27 @@ const createUser = async (req, res) => {
     loginTime: Date.now(),
     token: '',
   }
-  // const token = {
-  //   mail,
-  //   code,
-  // }
   let token = jwt.sign(req.body) // 生成token
-  console.error('登录body', req.body)
   const result = await dbOperations.findUserByMail(mail)
-  console.error('查询用户', result)
   if (result?._id) {
-    console.log('已存在用户', result)
     userId = result._id
     updateLocal(req, userId)
     await dbOperations.updateUser(userId, { $set: { token } })
   } else {
-    console.log('创建新用户')
-
     const verifyRes = await sendMailObj.verifyCode(mail, code)
     if (verifyRes.error === 1) {
-      res.json({
-        error: 1,
-        data: verifyRes.msg,
-      })
-      return
+      throw new Error(verifyRes.msg)
     }
 
     userInfo.token = token
     const result = await dbOperations.insertUser(userInfo)
     userId = result.insertedId.toHexString()
     updateLocal(req, result.insertedId)
-    console.error('创建新用户成功', result)
   }
-  res.json({
-    error: 0,
-    data: '登录成功',
+  return {
     token,
     userId,
-  })
+  }
 }
 
 // 创建标签组
@@ -128,11 +108,7 @@ const createUrlTag = async (req, res) => {
   const groups = await dbOperations.findUserTags(_id)
   const hasAleady = groups.find(i => i.name === body.name)
   if (hasAleady) {
-    res.json({
-      error: 1,
-      data: null,
-      msg: '标签名重复',
-    })
+    throw new Error('标签名重复')
   } else {
     await dbOperations.inserUserTag(doc)
     // mongodb.insertOne('url_tag', doc, () => {
@@ -140,28 +116,18 @@ const createUrlTag = async (req, res) => {
       const { userId, _id, ...params } = i
       return { ...params }
     })
-    res.json({
-      error: 0,
-      msg: '保存成功',
-      data: result,
-    })
-    // })
+    return result
   }
 }
 
 // 查询用户标签
 const getUrlTag = async (req, res) => {
   const groups = await dbOperations.findUserTags(req._id)
-  console.error('查询用户所有标签', groups)
   const result = groups.map(i => {
     const { userId, ...params } = i
     return { ...params }
   })
-  res.json({
-    error: 0,
-    data: result,
-    msg: '查询成功',
-  })
+  return result
 }
 
 // 处理收藏网址功能
@@ -169,7 +135,6 @@ const addFavorUrl = async (req, res) => {
   const { _id } = req
   const { url } = req.query
   const result = await dbOperations.findUserInfo(_id)
-  console.error('查询到用户收藏网址结果', result)
   const { collectUrls = [] } = result
   const index = collectUrls.indexOf(url)
   const hasfavor = index > -1
@@ -179,11 +144,10 @@ const addFavorUrl = async (req, res) => {
     collectUrls.push(url)
   }
   await dbOperations.updateUser(_id, { $set: { collectUrls } })
-  res.json({
-    error: 0,
+  return {
     msg: hasfavor ? '取消收藏' : '收藏成功',
     data: collectUrls,
-  })
+  }
 }
 
 // 稍后再看
@@ -197,21 +161,12 @@ const setLater = async (req, res) => {
     ...body,
   }
   await dbOperations.insertLater(createObj)
-  res.json({
-    error: 0,
-    msg: '添加成功',
-    data: [...laterResults, createObj],
-  })
+  return [...laterResults, createObj]
 }
 
 const getLater = async (req, res) => {
   const laterResults = (await dbOperations.findUserLater(req._id)) || []
-  console.error('查询成功', laterResults)
-  res.json({
-    error: 0,
-    msg: '查询成功',
-    data: laterResults,
-  })
+  return laterResults
 }
 // 更新稍后再看
 const updateLater = async (req, res) => {
@@ -222,11 +177,7 @@ const updateLater = async (req, res) => {
       const status = Number(!i?.status)
       await dbOperations.updateLater(i._id, { $set: { status } })
       const updateData = await dbOperations.findUserLater(req._id)
-      res.json({
-        error: 0,
-        msg: '更新成功',
-        data: updateData,
-      })
+      return updateData
     }
   })
 }
@@ -234,11 +185,8 @@ const deleteLater = async (req, res) => {
   const { _id } = req.query
   await dbOperations.deleteLater(_id)
   const updateData = await dbOperations.findUserLater(req._id)
-  res.json({
-    error: 0,
-    msg: '删除成功',
-    data: updateData,
-  })
+
+  return updateData
 }
 
 // 关键词记事本
@@ -251,31 +199,22 @@ const setTodoKeys = async (req, res) => {
     status: 0,
     ...body,
   }
+  console.error('createobj', createObj)
   await dbOperations.insertTodoKeys(createObj)
-  res.json({
-    error: 0,
-    msg: '添加成功',
-    data: [...todoKeysResults, createObj],
-  })
+
+  return [...todoKeysResults, createObj]
 }
 
 const getTodoKeys = async (req, res) => {
   const todoKeysResults = (await dbOperations.findUserTodoKeys(req._id)) || []
-  res.json({
-    error: 0,
-    msg: '查询成功',
-    data: todoKeysResults,
-  })
+  return todoKeysResults
 }
 const deleteTodoKeys = async (req, res) => {
   const { _id } = req.query
   await dbOperations.deleteTodoKeys(_id)
   const updateData = await dbOperations.findUserTodoKeys(req._id)
-  res.json({
-    error: 0,
-    msg: '删除成功',
-    data: updateData,
-  })
+
+  return updateData
 }
 
 const updateTodoKeys = async (req, res) => {
@@ -286,11 +225,7 @@ const updateTodoKeys = async (req, res) => {
       const status = Number(!i?.status)
       await dbOperations.updateTodoKeys(i._id, { $set: { status } })
       const updateData = await dbOperations.findUserTodoKeys(req._id)
-      res.json({
-        error: 0,
-        msg: '更新成功',
-        data: updateData,
-      })
+      return updateData
     }
   })
 }

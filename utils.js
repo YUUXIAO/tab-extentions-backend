@@ -1,3 +1,20 @@
+const codeMaps = Object.freeze({
+  OK: { code: 200, error: 0, msg: '成功' },
+  ERR_AUTH: { code: 401, error: 1, msg: '权限校验失败' },
+  ERR_AUTH2: { code: 403, error: 1, msg: '权限校验失败' },
+  ERR_INTERNAL: { code: 500, error: 1, msg: '服务器错误' },
+})
+
+const build = (respCode, data = null) => {
+  let { code, msg = 'ok', error = 0 } = respCode
+  console.error('build', data)
+  if (data?.msg) {
+    msg = data.msg
+    data = data?.data || null
+  }
+  return { code, msg, error, data: data }
+}
+
 // 发送验证码邮件模版
 const emailTemplate = code => {
   return `<div>Welcome!</div>
@@ -14,5 +31,7 @@ const emailTemplate = code => {
 }
 
 module.exports = {
+  codeMaps,
+  build,
   emailTemplate: emailTemplate,
 }

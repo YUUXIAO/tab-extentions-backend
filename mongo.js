@@ -19,7 +19,7 @@ async function _connect() {
     console.log('Connected successfully to server')
     return db
   } catch (err) {
-    console.error('Connected Failed:', err)
+    console.error('mongo链接失败', err)
   }
 }
 
