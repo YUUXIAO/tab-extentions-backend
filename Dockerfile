@@ -4,7 +4,7 @@ WORKDIR /tab-extension
 
 COPY *.js .
 COPY package.json .
-COPY *.html .
+COPY public ./public
 
 ENV DB_HOST=mongodb
 
