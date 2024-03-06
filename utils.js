@@ -28,7 +28,7 @@ const emailTemplate = code => {
 <br>
 <div>Thanks again for signing up!
 </div>
-<div>P.S. lf the code has expired or you closedthe activation page <a href="mailto:${Config.mailAddress}">click here</a>.
+<div>P.S. lf you have any questions, please <a href="mailto:${Config.mailAddress}">click here</a>.
 </div>`
 }
 
