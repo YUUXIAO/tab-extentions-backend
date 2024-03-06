@@ -9,7 +9,6 @@ const codeMaps = Object.freeze({
 
 const build = (respCode, data = null) => {
   let { code, msg = 'ok', error = 0 } = respCode
-  console.error('build', data)
   if (data?.msg) {
     msg = data.msg
     data = data?.data || null

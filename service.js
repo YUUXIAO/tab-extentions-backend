@@ -136,12 +136,12 @@ const addFavorUrl = async (req, res) => {
   const { url } = req.query
   const result = await dbOperations.findUserInfo(_id)
   const { collectUrls = [] } = result
-  const index = collectUrls.indexOf(url)
+  const index = collectUrls.findIndex(i => i.url === url)
   const hasfavor = index > -1
   if (hasfavor) {
     collectUrls.splice(index, 1)
   } else {
-    collectUrls.push(url)
+    collectUrls.push(req.query)
   }
   await dbOperations.updateUser(_id, { $set: { collectUrls } })
   return {
