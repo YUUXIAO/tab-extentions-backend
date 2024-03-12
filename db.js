@@ -47,7 +47,6 @@ const verifyRegisterCode = (mail, code) => {
 
 // 查询用户稍后再看
 const findUserLater = userId => {
-  console.error('userId', userId)
   return mongo.findAll('see_later', { userId: userId })
 }
 // 插入一条稍后再看

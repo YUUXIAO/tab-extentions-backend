@@ -6,6 +6,7 @@ const dbOperations = require('./db.js')
 const getUserInfo = async (req, res) => {
   const data = await dbOperations.findUserInfo(req._id)
   const { token, loginTime, ...otherData } = data
+
   const laterData = await dbOperations.findUserLater(req._id)
   const todoData = await dbOperations.findUserTodoKeys(req._id)
   let laterCount = 0
